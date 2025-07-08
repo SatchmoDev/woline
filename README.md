@@ -1,140 +1,166 @@
-# Woline - Ethiopian Security Incident Visualization Dashboard
+# Ethiopia Security Visualization
 
-A real-time visualization dashboard that displays security incidents across three Ethiopian woredas (administrative districts): Bishoftu, Jimma, and Debre Tabor. The application provides an interactive timeline showing how security situations evolve over time with color-coded threat levels.
+An interactive, animated map visualization displaying security incidents across three Ethiopian woredas (administrative districts): Bugna, Gaz Gibla, and Dehana. The visualization presents a timeline-driven animation showing the evolution of threat levels over time, culminating in a broader view of security conditions across Ethiopia.
+
+## Overview
+
+This project creates a cinematic security briefing visualization that:
+- Opens with a full map of Ethiopia
+- Zooms to focus on three specific woredas in the northern region
+- Displays real-time incident counters for six threat categories
+- Shows color-coded threat levels (red/yellow) based on recent incident activity
+- Concludes with a randomized threat distribution across all of Ethiopia
 
 ## Features
 
-- **Three-Panel Map Display**: Side-by-side visualization of three different woredas
-- **Real-Time Timeline Animation**: 35-second animated timeline showing incident progression from June 2024 to June 2025
-- **Color-Coded Threat Levels**:
-  - **Red**: High-risk incidents (fatalities ≥ certain threshold) - displayed for 30 days
-  - **Yellow**: Medium-risk incidents or red incidents aging out - displayed for 20 additional days
-  - **Transparent**: No active threats
-- **Interactive Incident Tallies**: Real-time counters for each incident type:
+### Animated Timeline
+- **25-second data progression** through security incidents from 2024-2025
+- **Real-time incident counting** across six categories:
   - Intertribal Conflict
   - Kidnapping
   - Disaster
   - Political Tension
   - Protests
   - Military Action
-- **Visual Flash Effects**: White flash when new incidents occur in already-active threat areas
-- **Responsive Design**: Optimized for full-screen dashboard display
 
-## Technology Stack
+### Dynamic Threat Visualization
+- **Time-based color system**: Red indicates recent high-threat incidents, yellow shows moderate threats
+- **Threat decay model**: Colors fade over time (red → yellow → transparent)
+- **Flash effects**: Visual indicators when new incidents occur in active threat areas
 
-- **Frontend**: Vanilla HTML, CSS, and JavaScript
-- **Mapping**: Mapbox GL JS v3.12.0
-- **Geospatial Processing**: Turf.js v6
-- **Data Format**: GeoJSON for both administrative boundaries and incident data
+### Geographic Focus
+- **Target region**: Northern Ethiopia (coordinates: 38.8089°E, 12.18°N)
+- **Administrative units**: Three specific woredas with detailed incident tracking
+- **Final overview**: Randomized threat distribution across all Ethiopian woredas
 
 ## Quick Start
 
-1. Clone or download this repository
-2. Create a `token.js` file in the root directory with your Mapbox access token:
-   ```javascript
-   const MAPBOX_ACCESS_TOKEN = "your-mapbox-token-here"
+### Prerequisites
+- Web browser with WebGL support
+- HTTP server (required for local file serving)
+- Mapbox account (token provided)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/ethiopia-security-viz.git
+   cd ethiopia-security-viz
    ```
-3. Ensure you have a web server to serve the files (due to CORS restrictions on local file access)
-4. Open `index.html` in a web browser
-5. The dashboard will automatically begin the timeline animation after map initialization
 
-### Using a Local Web Server
+2. **Start a local server**
+   ```bash
+   # Using Python
+   python -m http.server 8000
+   
+   # Using Node.js
+   npx serve .
+   
+   # Using any other HTTP server
+   ```
 
-```bash
-# Using Python 3
-python -m http.server 8000
+3. **Open in browser**
+   ```
+   http://localhost:8000
+   ```
 
-# Using Node.js (if you have http-server installed)
-npx http-server
-
-# Using PHP
-php -S localhost:8000
-```
-
-Then navigate to `http://localhost:8000` in your browser.
+4. **View the animation**
+   The visualization starts automatically and runs for approximately 35-40 seconds.
 
 ## Data Structure
 
+### Security Incidents (`data/fake.geojson`)
+Each incident includes:
+- **Timestamp**: Event date for timeline positioning
+- **Location**: Coordinates matching specific woredas
+- **Event Type**: One of six security categories
+- **Threat Level**: Red (high) or Yellow (moderate)
+- **Casualties**: Fatality count for severity assessment
+
 ### Administrative Boundaries (`data/woreda.geojson`)
-
-Contains the geographic boundaries for Ethiopian woredas with properties including:
-
-- `id`: Unique woreda identifier
-
-### Incident Data (`data/fake.geojson`)
-
-Contains security incident points with properties including:
-
-- `event_id`: Unique incident identifier
-- `event_date`: Date of incident (YYYY-MM-DD format)
-- `event_type`: Category of security incident
-- `fatalities`: Number of casualties
-- `color`: Threat level indicator ("red" or "yellow")
-- `coordinates`: [longitude, latitude] of incident location
+Ethiopian administrative district boundaries for geographic visualization.
 
 ## Configuration
 
-Key configuration constants in the JavaScript code:
-
+### Key Settings (in `index.html`)
 ```javascript
-const TIMING_CONSTANTS = {
-  timelineAnimationDuration: 35000, // 35 seconds total animation
-  redPeriodDays: 30, // Days to show red threat level
-  yellowOnlyPeriodDays: 20, // Additional days for yellow level
-  flashDuration: 200, // Flash effect duration in ms
+// Target coordinates and zoom level
+const TARGET_CENTER = [38.8089, 12.18]
+const TARGET_ZOOM = 9
+
+// Animation timing
+const TIMING = {
+  initialDelay: 5000,        // 5-second opening
+  timelineDuration: 25000,   // 25-second progression
+  // ... other timing settings
 }
+
+// Threat decay periods
+redPeriodDays: 30,           // Red threat duration
+yellowOnlyPeriodDays: 20,    // Yellow threat duration
 ```
 
-### Mapbox Configuration
+## Screen Recording
 
-- Custom Mapbox style: `mapbox://styles/studavid/cmcmsfdcd00el01s03dabfyoy`
-- Access token should be placed in `token.js` (excluded from version control)
+This visualization is optimized for screen capture:
 
-## Project Structure
+### OBS Studio Setup
+1. **Add Browser Source**
+   - URL: `http://localhost:8000`
+   - Resolution: 1920x1080
+   - Enable "Refresh browser when scene becomes active"
 
-```
-woline/
-├── index.html          # Main application file
-├── token.js            # Mapbox access token (create this file)
-├── data/
-│   ├── woreda.geojson  # Administrative boundary data
-│   ├── fake.geojson    # Security incident data
-│   └── seal.png        # Watermark logo
-├── favicon.ico         # Browser icon
-├── .gitignore          # Git ignore file
-└── README.md           # This file
-```
+2. **Recording Settings**
+   - Format: MP4
+   - Quality: High (10000+ Kbps)
+   - Duration: ~40 seconds for complete animation
 
-## Security and Privacy
+3. **Timing**
+   - Start recording before page load
+   - Animation begins automatically after 5 seconds
+   - Full sequence completes in 35-40 seconds
 
-This dashboard is designed for defensive security analysis and incident monitoring. The data includes:
+## Technical Architecture
 
-- Geographic incident locations
-- Incident types and severity levels
-- Timeline information for threat assessment
+### Built With
+- **Mapbox GL JS**: Interactive map rendering and animations
+- **Vanilla JavaScript**: No external frameworks
+- **GeoJSON**: Standard geographic data format
+- **CSS3**: Animations and responsive design
+
+### Key Components
+- **Animation Controller**: Orchestrates the 6-step sequence
+- **Timeline System**: Manages data progression and UI updates
+- **Color State Manager**: Handles threat level visualization
+- **Layer Management**: Separate rendering for animation and finale phases
 
 ## Browser Compatibility
 
-- Chrome/Chromium 60+
-- Firefox 55+
-- Safari 12+
-- Edge 79+
+- Chrome 80+ (recommended)
+- Firefox 75+
+- Safari 13+
+- Edge 80+
 
-Requires WebGL support for Mapbox GL JS functionality.
-
-## Development Notes
-
-- The application uses a 35-second animation cycle to represent approximately 1 year of data
-- Color transitions follow a specific timeline: Red (30 days) → Yellow (20 days) → Transparent
-- Maps automatically transition from a country-wide view to individual woreda focus over 4 seconds
-- Incident tallies update in real-time during timeline playback
-
-## Performance Considerations
-
-- Timeline updates are throttled to 200ms intervals for smooth animation
-- Map transitions use eased animations for visual appeal
-- Color updates are batched to minimize rendering overhead
+WebGL support required for optimal performance.
 
 ## License
 
-This project is provided as-is for educational and defensive security purposes.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Acknowledgments
+
+- Ethiopian administrative boundary data
+- Mapbox for mapping platform
+- Security incident data modeling based on real-world patterns
+
+---
+
+**Note**: This visualization uses simulated data for demonstration purposes. The incident data is generated for educational and presentation use only.
