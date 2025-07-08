@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Three Woreda Maps</title>
+    <title>Ethiopia Security Visualization</title>
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.12.0/mapbox-gl.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
@@ -14,104 +14,46 @@
     />
 
     <style>
-      /* Layout and Structure */
       body {
         margin: 0;
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
+        padding: 0;
+        overflow: hidden;
       }
 
-      #maps-container {
-        display: flex;
-        flex: 1;
-      }
-
-      .map-wrapper {
-        flex: 1;
-        position: relative;
-      }
-
-      .map {
-        width: 100%;
-        height: 100%;
-      }
-
-      .map-wrapper:nth-child(2) {
-        border-left: 2px solid black;
-        border-right: 2px solid black;
-      }
-
-      /* Tally Card Styles */
-      .tally-card {
+      #map {
         position: absolute;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        background-color: rgba(255, 255, 255, 0.95);
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        padding: 15px;
-        font-family: Arial, sans-serif;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        z-index: 100;
-        min-width: 280px;
-        opacity: 0;
-        transition: opacity 1s ease-in-out;
+        top: 0;
+        bottom: 0;
+        width: 100%;
       }
 
-      .tally-card.visible {
-        opacity: 1;
+      .seal-watermark {
+        position: fixed;
+        top: 30px;
+        left: 30px;
+        z-index: 10;
+        width: 120px;
+        height: auto;
       }
 
-      .tally-card h3 {
-        margin: 0 0 15px 0;
-        font-size: 16px;
-        font-weight: bold;
-        text-align: center;
-        color: #333;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 8px;
-      }
-
-      .tally-item {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-        font-size: 14px;
-      }
-
-      .tally-item:last-child {
-        margin-bottom: 0;
-      }
-
-      .event-type {
-        color: #555;
-        font-weight: normal;
-        font-size: 18px;
-      }
-
-      .count {
-        font-weight: bold;
-        color: #333;
-        min-width: 20px;
-        font-size: 18px;
-        text-align: right;
-      }
-
-      /* Timeline Styles */
       #timeline-container {
         position: fixed;
         top: 20px;
         left: 50%;
         transform: translateX(-50%);
         background-color: #ffffff;
-        width: 112%;
+        width: 90%;
         max-width: 1120px;
         z-index: 1000;
         padding: 10px;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        opacity: 0;
+        transition: opacity 1s ease-in-out;
+      }
+
+      #timeline-container.visible {
+        opacity: 1;
       }
 
       #timeline-bar {
@@ -126,7 +68,7 @@
         height: 100%;
         width: 0%;
         background-color: #1f9c1f;
-        transition: width 35s linear;
+        transition: width 25s linear;
       }
 
       #timeline-dates {
@@ -146,19 +88,78 @@
         padding: 0 4px;
       }
 
-      /* Watermark */
-      .seal-watermark {
+      #tally-container {
         position: fixed;
-        top: 30px;
-        left: 30px;
-        z-index: 10;
-        width: 120px;
-        height: auto;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 30px;
+        z-index: 100;
       }
+
+      .tally-card {
+        background-color: rgba(255, 255, 255, 0.95);
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 15px;
+        font-family: Arial, sans-serif;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        min-width: 280px;
+        opacity: 0;
+        transition: opacity 1s ease-in-out;
+      }
+
+      .tally-card.visible {
+        opacity: 1;
+      }
+
+      .tally-card h3 {
+        margin: 0 0 15px 0;
+        font-size: 18px;
+        font-weight: bold;
+        text-align: center;
+        color: #333;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 4px;
+      }
+
+      .tally-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 14px;
+      }
+
+      .tally-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .event-type {
+        color: #555;
+        font-weight: normal;
+        font-size: 16px;
+      }
+
+      .count {
+        font-weight: bold;
+        color: #333;
+        min-width: 20px;
+        font-size: 16px;
+        text-align: right;
+      }
+
+      .counties {
+        margin: 0 0 10px 0;
+        text-align: center;
+      }
+
     </style>
   </head>
 
   <body>
+    <div id="map"></div>
+
     <img src="data/seal.png" alt="ALT Space" class="seal-watermark" />
 
     <div id="timeline-container">
@@ -172,145 +173,127 @@
       </div>
     </div>
 
-    <div id="maps-container">
-      <div class="map-wrapper">
-        <div id="map1" class="map"></div>
-        <div id="tally1" class="tally-card">
-          <!-- <h3>Bishoftu Incidents</h3> -->
-          <div class="tally-item">
-            <span class="event-type">Intertribal Conflict:</span>
-            <span class="count">0</span>
-          </div>
-          <div class="tally-item">
-            <span class="event-type">Kidnapping:</span>
-            <span class="count">0</span>
-          </div>
-          <div class="tally-item">
-            <span class="event-type">Disaster:</span>
-            <span class="count">0</span>
-          </div>
-          <div class="tally-item">
-            <span class="event-type">Political Tension:</span>
-            <span class="count">0</span>
-          </div>
-          <div class="tally-item">
-            <span class="event-type">Protests:</span>
-            <span class="count">0</span>
-          </div>
-          <div class="tally-item">
-            <span class="event-type">Military Action:</span>
-            <span class="count">0</span>
-          </div>
+    <div id="tally-container">
+      <div id="tally-bugna" class="tally-card">
+        <h3>Woreda</h3>
+        <h4 class="counties">(equivalent to counties)</h4>
+        <div class="tally-item">
+          <span class="event-type">Intertribal Conflict:</span>
+          <span class="count">0</span>
+        </div>
+        <div class="tally-item">
+          <span class="event-type">Kidnapping:</span>
+          <span class="count">0</span>
+        </div>
+        <div class="tally-item">
+          <span class="event-type">Disaster:</span>
+          <span class="count">0</span>
+        </div>
+        <div class="tally-item">
+          <span class="event-type">Political Tension:</span>
+          <span class="count">0</span>
+        </div>
+        <div class="tally-item">
+          <span class="event-type">Protests:</span>
+          <span class="count">0</span>
+        </div>
+        <div class="tally-item">
+          <span class="event-type">Military Action:</span>
+          <span class="count">0</span>
         </div>
       </div>
-      <div class="map-wrapper">
-        <div id="map2" class="map"></div>
-        <div id="tally2" class="tally-card">
-          <!-- <h3>Jimma Incidents</h3> -->
-          <div class="tally-item">
-            <span class="event-type">Intertribal Conflict:</span>
-            <span class="count">0</span>
-          </div>
-          <div class="tally-item">
-            <span class="event-type">Kidnapping:</span>
-            <span class="count">0</span>
-          </div>
-          <div class="tally-item">
-            <span class="event-type">Disaster:</span>
-            <span class="count">0</span>
-          </div>
-          <div class="tally-item">
-            <span class="event-type">Political Tension:</span>
-            <span class="count">0</span>
-          </div>
-          <div class="tally-item">
-            <span class="event-type">Protests:</span>
-            <span class="count">0</span>
-          </div>
-          <div class="tally-item">
-            <span class="event-type">Military Action:</span>
-            <span class="count">0</span>
-          </div>
+
+      <div id="tally-gazgibla" class="tally-card">
+        <h3>Woreda</h3>
+        <h4 class="counties">(equivalent to counties)</h4>
+        <div class="tally-item">
+          <span class="event-type">Intertribal Conflict:</span>
+          <span class="count">0</span>
+        </div>
+        <div class="tally-item">
+          <span class="event-type">Kidnapping:</span>
+          <span class="count">0</span>
+        </div>
+        <div class="tally-item">
+          <span class="event-type">Disaster:</span>
+          <span class="count">0</span>
+        </div>
+        <div class="tally-item">
+          <span class="event-type">Political Tension:</span>
+          <span class="count">0</span>
+        </div>
+        <div class="tally-item">
+          <span class="event-type">Protests:</span>
+          <span class="count">0</span>
+        </div>
+        <div class="tally-item">
+          <span class="event-type">Military Action:</span>
+          <span class="count">0</span>
         </div>
       </div>
-      <div class="map-wrapper">
-        <div id="map3" class="map"></div>
-        <div id="tally3" class="tally-card">
-          <!-- <h3>Debre Tabor Incidents</h3> -->
-          <div class="tally-item">
-            <span class="event-type">Intertribal Conflict:</span>
-            <span class="count">0</span>
-          </div>
-          <div class="tally-item">
-            <span class="event-type">Kidnapping:</span>
-            <span class="count">0</span>
-          </div>
-          <div class="tally-item">
-            <span class="event-type">Disaster:</span>
-            <span class="count">0</span>
-          </div>
-          <div class="tally-item">
-            <span class="event-type">Political Tension:</span>
-            <span class="count">0</span>
-          </div>
-          <div class="tally-item">
-            <span class="event-type">Protests:</span>
-            <span class="count">0</span>
-          </div>
-          <div class="tally-item">
-            <span class="event-type">Military Action:</span>
-            <span class="count">0</span>
-          </div>
+
+      <div id="tally-dehana" class="tally-card">
+        <h3>Woreda</h3>
+        <h4 class="counties">(equivalent to counties)</h4>
+        <div class="tally-item">
+          <span class="event-type">Intertribal Conflict:</span>
+          <span class="count">0</span>
+        </div>
+        <div class="tally-item">
+          <span class="event-type">Kidnapping:</span>
+          <span class="count">0</span>
+        </div>
+        <div class="tally-item">
+          <span class="event-type">Disaster:</span>
+          <span class="count">0</span>
+        </div>
+        <div class="tally-item">
+          <span class="event-type">Political Tension:</span>
+          <span class="count">0</span>
+        </div>
+        <div class="tally-item">
+          <span class="event-type">Protests:</span>
+          <span class="count">0</span>
+        </div>
+        <div class="tally-item">
+          <span class="event-type">Military Action:</span>
+          <span class="count">0</span>
         </div>
       </div>
     </div>
 
     <script>
-      // ===================================================================
-      // CONSTANTS AND CONFIGURATION
-      // ===================================================================
-
-      // MAPBOX_ACCESS_TOKEN loaded from token.js
+      // Configuration
       const MAPBOX_STYLE = "mapbox://styles/studavid/cmcmsfdcd00el01s03dabfyoy"
+      const ETHIOPIA_CENTER = [40.432665, 9.198629]
+      const ETHIOPIA_ZOOM = 5.5
+      const TARGET_CENTER = [38.8089, 12.18]
+      const TARGET_ZOOM = 9
 
       const DATA_URLS = {
         woredas: "/data/woreda.geojson",
         events: "/data/fake.geojson",
       }
 
-      const WOREDA_CONFIGS = [
-        {
-          id: "map1",
-          woredaId: 223294,
-          woredaName: "Bishoftu",
-          center: [38.984, 8.747],
-        },
-        {
-          id: "map2",
-          woredaId: 223235,
-          woredaName: "Jimma",
-          center: [36.846, 7.685],
-        },
-        {
-          id: "map3",
-          woredaId: 222955,
-          woredaName: "Debre Tabor",
-          center: [38.007, 11.862],
-        },
-      ]
-
-      const WOREDA_COORDINATES = {
-        Bishoftu: [38.984, 8.747],
-        Jimma: [36.846, 7.685],
-        "Debre Tabor": [38.007, 11.862],
+      const WOREDA_CONFIGS = {
+        Bugna: { id: 222967, center: [38.8497, 12.1538] },
+        "Gaz Gibla": { id: 223090, center: [39.0578, 12.4104] },
+        Dehana: { id: 223089, center: [38.7756, 12.4379] },
       }
 
-      const TIMING_CONSTANTS = {
-        timelineAnimationDuration: 35000, // 35 seconds
-        colorUpdateThrottle: 200, // 200ms
-        flashDuration: 200, // 200ms
+      const TIMING = {
+        initialDelay: 5000,
+        zoomDuration: 3000,
+        timelineDelay: 1000,
+        tallyFadeDelay: 500,
+        timelineDuration: 25000,
+        fadeOutDelay: 1000,
+        finalZoomDuration: 3000,
+        endDelay: 3000,
+        colorUpdateThrottle: 200,
+        flashDuration: 200,
         redPeriodDays: 30,
-        totalRedYellowPeriodDays: 50, // 30 red + 20 yellow
+        totalRedYellowPeriodDays: 50,
         yellowOnlyPeriodDays: 20,
         coordinateMatchTolerance: 0.001,
       }
@@ -322,32 +305,26 @@
         transparent: "rgba(0,0,0,0)",
       }
 
-      const ADDIS_ABABA_CENTER = [38.7666, 9.0333]
-
-      // ===================================================================
-      // GLOBAL STATE VARIABLES
-      // ===================================================================
-
+      // State
+      let map = null
       let eventData = []
-      let mapInstances = []
       let minDate = null
       let maxDate = null
       let lastUpdateTime = 0
-      let mapsLoaded = 0
-      let mapsTransitioned = 0
+      let animationActive = false
 
       const woredaState = {
-        Bishoftu: {
+        Bugna: {
           lastColor: COLORS.transparent,
           lastEventDate: null,
           isFlashing: false,
         },
-        Jimma: {
+        "Gaz Gibla": {
           lastColor: COLORS.transparent,
           lastEventDate: null,
           isFlashing: false,
         },
-        "Debre Tabor": {
+        Dehana: {
           lastColor: COLORS.transparent,
           lastEventDate: null,
           isFlashing: false,
@@ -355,7 +332,7 @@
       }
 
       const tallyCounts = {
-        Bishoftu: {
+        Bugna: {
           "Intertribal Conflict": 0,
           Kidnapping: 0,
           Disaster: 0,
@@ -363,7 +340,7 @@
           Protests: 0,
           "Military Action": 0,
         },
-        Jimma: {
+        "Gaz Gibla": {
           "Intertribal Conflict": 0,
           Kidnapping: 0,
           Disaster: 0,
@@ -371,7 +348,7 @@
           Protests: 0,
           "Military Action": 0,
         },
-        "Debre Tabor": {
+        Dehana: {
           "Intertribal Conflict": 0,
           Kidnapping: 0,
           Disaster: 0,
@@ -381,10 +358,7 @@
         },
       }
 
-      // ===================================================================
-      // UTILITY FUNCTIONS
-      // ===================================================================
-
+      // Utility functions
       function formatDate(date) {
         return date.toLocaleDateString("en-US", {
           month: "short",
@@ -394,14 +368,11 @@
       }
 
       function getWoredaFromCoordinates(longitude, latitude) {
-        for (const [woredaName, [woredaLng, woredaLat]] of Object.entries(
-          WOREDA_COORDINATES
-        )) {
+        for (const [woredaName, config] of Object.entries(WOREDA_CONFIGS)) {
+          const [woredaLng, woredaLat] = config.center
           if (
-            Math.abs(longitude - woredaLng) <
-              TIMING_CONSTANTS.coordinateMatchTolerance &&
-            Math.abs(latitude - woredaLat) <
-              TIMING_CONSTANTS.coordinateMatchTolerance
+            Math.abs(longitude - woredaLng) < TIMING.coordinateMatchTolerance &&
+            Math.abs(latitude - woredaLat) < TIMING.coordinateMatchTolerance
           ) {
             return woredaName
           }
@@ -413,60 +384,7 @@
         return (toDate - fromDate) / (1000 * 60 * 60 * 24)
       }
 
-      function updateTallyCounts(currentDate) {
-        // Reset all tally counts
-        Object.keys(tallyCounts).forEach((woredaName) => {
-          Object.keys(tallyCounts[woredaName]).forEach((eventType) => {
-            tallyCounts[woredaName][eventType] = 0
-          })
-        })
-
-        // Count events up to current date
-        eventData.forEach((event) => {
-          if (event.date <= currentDate) {
-            const woredaName = getWoredaFromCoordinates(
-              event.longitude,
-              event.latitude
-            )
-            if (
-              woredaName &&
-              tallyCounts[woredaName] &&
-              tallyCounts[woredaName][event.eventType] !== undefined
-            ) {
-              tallyCounts[woredaName][event.eventType]++
-            }
-          }
-        })
-      }
-
-      function updateTallyDisplay() {
-        WOREDA_CONFIGS.forEach((config, index) => {
-          const tallyElement = document.getElementById(`tally${index + 1}`)
-          if (tallyElement) {
-            const countElements = tallyElement.querySelectorAll(".count")
-            const eventTypes = [
-              "Intertribal Conflict",
-              "Kidnapping",
-              "Disaster",
-              "Political Tension",
-              "Protests",
-              "Military Action",
-            ]
-
-            eventTypes.forEach((eventType, typeIndex) => {
-              if (countElements[typeIndex]) {
-                countElements[typeIndex].textContent =
-                  tallyCounts[config.woredaName][eventType]
-              }
-            })
-          }
-        })
-      }
-
-      // ===================================================================
-      // DATA LOADING AND PROCESSING
-      // ===================================================================
-
+      // Data loading
       async function loadEventData() {
         try {
           const response = await fetch(DATA_URLS.events)
@@ -504,10 +422,62 @@
         }
       }
 
-      // ===================================================================
-      // COLOR STATE MANAGEMENT
-      // ===================================================================
+      // Tally management
+      function updateTallyCounts(currentDate) {
+        Object.keys(tallyCounts).forEach((woredaName) => {
+          Object.keys(tallyCounts[woredaName]).forEach((eventType) => {
+            tallyCounts[woredaName][eventType] = 0
+          })
+        })
 
+        eventData.forEach((event) => {
+          if (event.date <= currentDate) {
+            const woredaName = getWoredaFromCoordinates(
+              event.longitude,
+              event.latitude
+            )
+            if (
+              woredaName &&
+              tallyCounts[woredaName] &&
+              tallyCounts[woredaName][event.eventType] !== undefined
+            ) {
+              tallyCounts[woredaName][event.eventType]++
+            }
+          }
+        })
+      }
+
+      function updateTallyDisplay() {
+        const woredaIds = {
+          Bugna: "tally-bugna",
+          "Gaz Gibla": "tally-gazgibla",
+          Dehana: "tally-dehana",
+        }
+
+        Object.entries(woredaIds).forEach(([woredaName, elementId]) => {
+          const tallyElement = document.getElementById(elementId)
+          if (tallyElement) {
+            const countElements = tallyElement.querySelectorAll(".count")
+            const eventTypes = [
+              "Intertribal Conflict",
+              "Kidnapping",
+              "Disaster",
+              "Political Tension",
+              "Protests",
+              "Military Action",
+            ]
+
+            eventTypes.forEach((eventType, index) => {
+              if (countElements[index]) {
+                countElements[index].textContent =
+                  tallyCounts[woredaName][eventType]
+              }
+            })
+          }
+        })
+      }
+
+      // Color state management
       function calculateWoredaColorState(woredaName, currentDate) {
         const woredaEvents = eventData.filter((event) => {
           const eventWoreda = getWoredaFromCoordinates(
@@ -543,11 +513,11 @@
           ? calculateDaysDifference(mostRecentYellow.date, currentDate)
           : null
 
-        if (mostRecentRed && daysSinceRed <= TIMING_CONSTANTS.redPeriodDays) {
+        if (mostRecentRed && daysSinceRed <= TIMING.redPeriodDays) {
           return { color: COLORS.red, mostRecentEventDate: mostRecentRed.date }
         } else if (
           mostRecentRed &&
-          daysSinceRed <= TIMING_CONSTANTS.totalRedYellowPeriodDays
+          daysSinceRed <= TIMING.totalRedYellowPeriodDays
         ) {
           return {
             color: COLORS.yellow,
@@ -555,7 +525,7 @@
           }
         } else if (
           mostRecentYellow &&
-          daysSinceYellow <= TIMING_CONSTANTS.yellowOnlyPeriodDays
+          daysSinceYellow <= TIMING.yellowOnlyPeriodDays
         ) {
           return {
             color: COLORS.yellow,
@@ -566,49 +536,11 @@
         }
       }
 
-      // ===================================================================
-      // VISUAL EFFECTS
-      // ===================================================================
-
-      function triggerFlash(woredaName, color) {
-        const mapInfo = mapInstances.find((m) => m.woredaName === woredaName)
-        if (!mapInfo || woredaState[woredaName].isFlashing) return
-
-        const map = mapInfo.map
-        woredaState[woredaName].isFlashing = true
-
-        if (map.getLayer("woreda-fill") && map.isStyleLoaded()) {
-          try {
-            map.setPaintProperty("woreda-fill", "fill-color", COLORS.white)
-
-            setTimeout(() => {
-              map.setPaintProperty("woreda-fill", "fill-color", color)
-              woredaState[woredaName].isFlashing = false
-            }, TIMING_CONSTANTS.flashDuration)
-          } catch (error) {
-            console.error(
-              `Failed to create flash effect for ${woredaName}:`,
-              error
-            )
-            woredaState[woredaName].isFlashing = false
-          }
-        }
-      }
-
       function updateWoredaColors(currentDate) {
-        if (mapsTransitioned < WOREDA_CONFIGS.length) return
+        if (!animationActive) return
 
-        const woredaResults = {}
-        WOREDA_CONFIGS.forEach((config) => {
-          woredaResults[config.woredaName] = calculateWoredaColorState(
-            config.woredaName,
-            currentDate
-          )
-        })
-
-        // Check for timer resets and trigger flash effects
-        Object.keys(woredaResults).forEach((woredaName) => {
-          const result = woredaResults[woredaName]
+        Object.keys(WOREDA_CONFIGS).forEach((woredaName) => {
+          const result = calculateWoredaColorState(woredaName, currentDate)
           const currentColor = result.color
           const currentEventDate = result.mostRecentEventDate
           const previousState = woredaState[woredaName]
@@ -625,21 +557,19 @@
 
           woredaState[woredaName].lastColor = currentColor
           woredaState[woredaName].lastEventDate = currentEventDate
-        })
 
-        // Update map colors
-        mapInstances.forEach((mapInfo) => {
-          const woredaName = mapInfo.woredaName
-          const color = woredaResults[woredaName].color
-
-          if (woredaState[woredaName].isFlashing) return
-
+          const woredaId = WOREDA_CONFIGS[woredaName].id
           if (
-            mapInfo.map.getLayer("woreda-fill") &&
-            mapInfo.map.isStyleLoaded()
+            !woredaState[woredaName].isFlashing &&
+            map.getLayer(`woreda-fill-${woredaId}`) &&
+            map.isStyleLoaded()
           ) {
             try {
-              mapInfo.map.setPaintProperty("woreda-fill", "fill-color", color)
+              map.setPaintProperty(
+                `woreda-fill-${woredaId}`,
+                "fill-color",
+                currentColor
+              )
             } catch (error) {
               console.error(
                 `Failed to set paint property for ${woredaName}:`,
@@ -650,61 +580,39 @@
         })
       }
 
-      // ===================================================================
-      // MAP TRANSITIONS
-      // ===================================================================
+      function triggerFlash(woredaName, color) {
+        if (woredaState[woredaName].isFlashing) return
 
-      function flyToWoredas() {
-        setTimeout(() => {
-          mapInstances.forEach((mapInfo, index) => {
-            const config = WOREDA_CONFIGS[index]
+        const woredaId = WOREDA_CONFIGS[woredaName].id
+        woredaState[woredaName].isFlashing = true
 
-            // Fetch woreda data and fly to bounds
-            fetch(DATA_URLS.woredas)
-              .then((res) => res.json())
-              .then((data) => {
-                const features = data.features.filter(
-                  (f) => f.properties.id === config.woredaId
-                )
-                if (features.length > 0) {
-                  const bbox = turf.bbox(features[0])
-                  mapInfo.map.fitBounds(bbox, {
-                    padding: 20,
-                    duration: 4000, // 4 second transition
-                    easing: (t) => {
-                      // Ease-in-out cubic for smooth, gradual movement
-                      return t < 0.5
-                        ? 4 * t * t * t
-                        : 1 - Math.pow(-2 * t + 2, 3) / 2
-                    },
-                  })
+        if (map.getLayer(`woreda-fill-${woredaId}`) && map.isStyleLoaded()) {
+          try {
+            map.setPaintProperty(
+              `woreda-fill-${woredaId}`,
+              "fill-color",
+              COLORS.white
+            )
 
-                  // Listen for transition completion
-                  mapInfo.map.once("moveend", () => {
-                    mapsTransitioned++
-
-                    // Fade in the tally card for this map
-                    const tallyCard = document.getElementById(
-                      `tally${index + 1}`
-                    )
-                    if (tallyCard) {
-                      tallyCard.classList.add("visible")
-                    }
-
-                    if (mapsTransitioned === WOREDA_CONFIGS.length) {
-                      startTimeline()
-                    }
-                  })
-                }
-              })
-          })
-        }, 3000) // 3 second delay
+            setTimeout(() => {
+              map.setPaintProperty(
+                `woreda-fill-${woredaId}`,
+                "fill-color",
+                color
+              )
+              woredaState[woredaName].isFlashing = false
+            }, TIMING.flashDuration)
+          } catch (error) {
+            console.error(
+              `Failed to create flash effect for ${woredaName}:`,
+              error
+            )
+            woredaState[woredaName].isFlashing = false
+          }
+        }
       }
 
-      // ===================================================================
-      // TIMELINE SYSTEM
-      // ===================================================================
-
+      // Timeline
       async function initTimeline() {
         try {
           const dateRange = await loadEventData()
@@ -722,95 +630,219 @@
       }
 
       function startTimeline() {
-        setTimeout(() => {
-          const progressBar = document.getElementById("timeline-progress")
-          progressBar.style.width = "100%"
+        animationActive = true
+        const progressBar = document.getElementById("timeline-progress")
+        progressBar.style.width = "100%"
 
-          const startTime = Date.now()
-          const totalDays = calculateDaysDifference(minDate, maxDate)
+        const startTime = Date.now()
+        const totalDays = calculateDaysDifference(minDate, maxDate)
 
-          const updateCurrentDate = () => {
-            const elapsed = Date.now() - startTime
-            const progress = Math.min(
-              elapsed / TIMING_CONSTANTS.timelineAnimationDuration,
-              1
-            )
-            const currentDays = totalDays * progress
-            const currentDate = new Date(
-              minDate.getTime() + currentDays * 24 * 60 * 60 * 1000
-            )
+        const updateCurrentDate = () => {
+          const elapsed = Date.now() - startTime
+          const progress = Math.min(elapsed / TIMING.timelineDuration, 1)
+          const currentDays = totalDays * progress
+          const currentDate = new Date(
+            minDate.getTime() + currentDays * 24 * 60 * 60 * 1000
+          )
 
-            document.getElementById("current-date").textContent =
-              formatDate(currentDate)
+          document.getElementById("current-date").textContent =
+            formatDate(currentDate)
 
-            const now = Date.now()
-            if (now - lastUpdateTime >= TIMING_CONSTANTS.colorUpdateThrottle) {
-              updateWoredaColors(currentDate)
-              updateTallyCounts(currentDate)
-              updateTallyDisplay()
-              lastUpdateTime = now
-            }
-
-            if (progress < 1) {
-              requestAnimationFrame(updateCurrentDate)
-            }
+          const now = Date.now()
+          if (now - lastUpdateTime >= TIMING.colorUpdateThrottle) {
+            updateWoredaColors(currentDate)
+            updateTallyCounts(currentDate)
+            updateTallyDisplay()
+            lastUpdateTime = now
           }
 
-          requestAnimationFrame(updateCurrentDate)
-        }, 500)
+          if (progress < 1) {
+            requestAnimationFrame(updateCurrentDate)
+          } else {
+            animationActive = false
+            endAnimation()
+          }
+        }
+
+        requestAnimationFrame(updateCurrentDate)
       }
 
-      // ===================================================================
-      // MAP INITIALIZATION
-      // ===================================================================
+      // Random woreda coloring
+      async function colorRandomWoredas() {
+        try {
+          // Clear the specific woreda layers first to prevent color mixing
+          Object.entries(WOREDA_CONFIGS).forEach(([woredaName, config]) => {
+            const woredaId = config.id
+            if (map.getLayer(`woreda-fill-${woredaId}`)) {
+              map.setPaintProperty(
+                `woreda-fill-${woredaId}`,
+                "fill-color",
+                COLORS.transparent
+              )
+              map.setPaintProperty(`woreda-fill-${woredaId}`, "fill-opacity", 0)
+            }
+          })
 
-      function initializeMaps() {
+          // Fetch all woreda data
+          const response = await fetch(DATA_URLS.woredas)
+          const woredaData = await response.json()
+          const allWoredas = woredaData.features
+
+          // Calculate how many woredas to color
+          const totalWoredas = allWoredas.length
+          const redCount = Math.floor(totalWoredas * 0.1) // 10%
+          const yellowCount = Math.floor(totalWoredas * 0.2) // 20%
+
+          // Randomly select woredas
+          const shuffled = [...allWoredas].sort(() => Math.random() - 0.5)
+          const redWoredas = shuffled
+            .slice(0, redCount)
+            .map((w) => w.properties.id)
+          const yellowWoredas = shuffled
+            .slice(redCount, redCount + yellowCount)
+            .map((w) => w.properties.id)
+
+          // Update the layer with a data-driven style
+          if (map.getLayer("all-woredas-fill")) {
+            map.setPaintProperty("all-woredas-fill", "fill-color", [
+              "case",
+              ["in", ["get", "id"], ["literal", redWoredas]],
+              COLORS.red,
+              ["in", ["get", "id"], ["literal", yellowWoredas]],
+              COLORS.yellow,
+              COLORS.transparent,
+            ])
+
+            map.setPaintProperty("all-woredas-fill", "fill-opacity", [
+              "case",
+              [
+                "in",
+                ["get", "id"],
+                ["literal", [...redWoredas, ...yellowWoredas]],
+              ],
+              0.5,
+              0,
+            ])
+          }
+        } catch (error) {
+          console.error("Error coloring random woredas:", error)
+        }
+      }
+
+      // Animation sequence
+      function startAnimationSequence() {
+        // Step 1: Wait 5 seconds
+        setTimeout(() => {
+          // Step 2: Zoom to target coordinates
+          map.flyTo({
+            center: TARGET_CENTER,
+            zoom: TARGET_ZOOM,
+            duration: TIMING.zoomDuration,
+            easing: (t) =>
+              t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
+          })
+
+          map.once("moveend", () => {
+            // Step 3: Show timeline
+            setTimeout(() => {
+              document
+                .getElementById("timeline-container")
+                .classList.add("visible")
+
+              // Step 4: Fade in tally boxes
+              setTimeout(() => {
+                document.querySelectorAll(".tally-card").forEach((card) => {
+                  card.classList.add("visible")
+                })
+
+                // Step 5: Start timeline animation
+                setTimeout(() => {
+                  startTimeline()
+                }, TIMING.tallyFadeDelay)
+              }, TIMING.tallyFadeDelay)
+            }, TIMING.timelineDelay)
+          })
+        }, TIMING.initialDelay)
+      }
+
+      function endAnimation() {
+        // Fade out tally boxes and timeline
+        setTimeout(() => {
+          document.querySelectorAll(".tally-card").forEach((card) => {
+            card.classList.remove("visible")
+          })
+          document
+            .getElementById("timeline-container")
+            .classList.remove("visible")
+
+          // Color random woredas then zoom back to Ethiopia
+          setTimeout(async () => {
+            await colorRandomWoredas()
+
+            // Small delay to see the colors before zooming out
+            setTimeout(() => {
+              map.flyTo({
+                center: ETHIOPIA_CENTER,
+                zoom: ETHIOPIA_ZOOM,
+                duration: TIMING.finalZoomDuration,
+                easing: (t) => -(Math.cos(Math.PI * t) - 1) / 2,
+              })
+            }, 500)
+          }, TIMING.fadeOutDelay)
+        }, TIMING.fadeOutDelay)
+      }
+
+      // Map initialization
+      function initializeMap() {
         mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN
 
-        WOREDA_CONFIGS.forEach((config) => {
-          const map = new mapboxgl.Map({
-            container: config.id,
-            style: MAPBOX_STYLE,
-            center: ADDIS_ABABA_CENTER,
-            zoom: 8,
+        map = new mapboxgl.Map({
+          container: "map",
+          style: MAPBOX_STYLE,
+          center: ETHIOPIA_CENTER,
+          zoom: ETHIOPIA_ZOOM,
+        })
+
+        map.on("load", async () => {
+          // Add woreda source
+          map.addSource("woredas", {
+            type: "geojson",
+            data: DATA_URLS.woredas,
           })
 
-          mapInstances.push({
-            map: map,
-            woredaName: config.woredaName,
+          // Add layer for all woredas (for final random coloring) - place it first
+          map.addLayer({
+            id: "all-woredas-fill",
+            type: "fill",
+            source: "woredas",
+            paint: {
+              "fill-color": COLORS.transparent,
+              "fill-opacity": 0,
+            },
           })
 
-          map.on("load", () => {
-            map.addSource("woredas", {
-              type: "geojson",
-              data: DATA_URLS.woredas,
-            })
-
+          // Add layers for each specific woreda (for the animation) - place on top
+          Object.entries(WOREDA_CONFIGS).forEach(([woredaName, config]) => {
             map.addLayer({
-              id: "woreda-fill",
+              id: `woreda-fill-${config.id}`,
               type: "fill",
               source: "woredas",
               paint: {
                 "fill-color": COLORS.transparent,
                 "fill-opacity": 0.5,
               },
-              filter: ["==", ["get", "id"], config.woredaId],
+              filter: ["==", ["get", "id"], config.id],
             })
-
-            mapsLoaded++
-            if (mapsLoaded === WOREDA_CONFIGS.length) {
-              flyToWoredas()
-            }
           })
+
+          // Start animation sequence
+          startAnimationSequence()
         })
       }
 
-      // ===================================================================
-      // APPLICATION INITIALIZATION
-      // ===================================================================
-
+      // Initialize
       window.addEventListener("load", () => {
-        initializeMaps()
+        initializeMap()
         initTimeline()
       })
     </script>
